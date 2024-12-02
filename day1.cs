@@ -1,4 +1,8 @@
-﻿string input = @"88159   51481
+﻿namespace advent_of_code_2024
+{
+    public class Day1
+    {
+        internal static string input = @"88159   51481
 66127   31794
 71500   84893
 59372   58807
@@ -999,27 +1003,32 @@
 21910   29845
 38235   16463";
 
-List<int> left = new List<int>();
-List<int> right = new List<int>();
+        public static void Run()
+        {
+            List<int> left = new List<int>();
+            List<int> right = new List<int>();
 
-foreach (string line in input.Split('\n'))
-{
-    string[] sides = line.Split("   ");
-    left.Add(int.Parse(sides[0]));
-    right.Add(int.Parse(sides[1]));
+            foreach (string line in input.Split('\n'))
+            {
+                string[] sides = line.Split("   ");
+                left.Add(int.Parse(sides[0]));
+                right.Add(int.Parse(sides[1]));
+            }
+
+            // Part 1
+            left.Sort();
+            right.Sort();
+
+            int total = 0;
+            for (int i = 0; i < left.Count; i++)
+            {
+                total += Math.Abs(right[i] - left[i]);
+            }
+
+            Console.WriteLine($"Total distance: {total}");
+
+            // Part 2
+            Console.WriteLine($"Similarity: {left.Sum(l => l * right.Count(r => r == l))}");
+        }
+    }
 }
-
-// Part 1
-left.Sort();
-right.Sort();
-
-int total = 0;
-for (int i = 0; i < left.Count; i++)
-{
-    total += Math.Abs(right[i] - left[i]);
-}
-
-Console.WriteLine($"Total distance: {total}");
-
-// Part 2
-Console.WriteLine($"Similarity: {left.Sum(l => l * right.Count(r => r == l))}");

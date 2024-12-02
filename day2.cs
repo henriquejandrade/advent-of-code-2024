@@ -1007,20 +1007,45 @@ namespace advent_of_code_2024
 
         public static void Run()
         {
-            IEnumerable<bool> reports = input
+            IEnumerable<IEnumerable<int>> reports = input
                 .Split('\n')
                 .Select(line => line.Trim().Split(' '))
-                .Select(levels => levels.Select(level => int.Parse(level)))
-                .Select(levels =>
-                    (Enumerable.SequenceEqual(levels.OrderBy(levels => levels), levels) ||
-                    Enumerable.SequenceEqual(levels.OrderByDescending(levels => levels), levels)) &&
-                    levels.Zip(levels.Skip(1), (a, b) => Math.Abs(a - b) >= 1 && Math.Abs(a - b) <= 3).All(level => level));
+                .Select(levels => levels.Select(level => int.Parse(level)));
 
-            foreach (bool report in reports) Console.WriteLine(report);
+            /*
+             * PART 1
+             */
+            IEnumerable<bool> checks = reports.Select(levels => Verify(levels));
+
+            foreach (bool check in checks) Console.WriteLine(check);
 
             Console.WriteLine();
-            Console.WriteLine($"Report count: {reports.Count()}");
-            Console.WriteLine($"Total safe: {reports.Count(report => report)}");
+            Console.WriteLine("Part 1:");
+            Console.WriteLine($"Report count: {checks.Count()}");
+            Console.WriteLine($"Total safe: {checks.Count(check => check)}");
+
+
+            /*
+             * PART 2
+             */
+            IEnumerable<bool> allReports = reports
+                .Select(levels => Enumerable.Range(0, levels.Count())
+                    .Select(j => levels.Where((level, i) => i != j))
+                    .Any(level => Verify(level)));
+
+            foreach (bool report in allReports) Console.WriteLine(report);
+
+            Console.WriteLine();
+            Console.WriteLine("Part 2:");
+            Console.WriteLine($"Report count: {allReports.Count()}");
+            Console.WriteLine($"Total safe: {allReports.Count(check => check)}");
+        }
+
+        private static bool Verify(IEnumerable<int> list)
+        {
+            return (Enumerable.SequenceEqual(list.OrderBy(item => item), list) ||
+                    Enumerable.SequenceEqual(list.OrderByDescending(item => item), list)) &&
+                    list.Zip(list.Skip(1), (a, b) => Math.Abs(a - b) >= 1 && Math.Abs(a - b) <= 3).All(item => item);
         }
     }
 }

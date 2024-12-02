@@ -1015,7 +1015,9 @@
                 right.Add(int.Parse(sides[1]));
             }
 
-            // Part 1
+            /*
+             * PART 1
+             */
             left.Sort();
             right.Sort();
 
@@ -1027,7 +1029,10 @@
 
             Console.WriteLine($"Total distance: {total}");
 
-            // Part 2
+
+            /*
+             * PART 2
+             */
             Console.WriteLine($"Similarity: {left.Sum(l => l * right.Count(r => r == l))}");
         }
     }

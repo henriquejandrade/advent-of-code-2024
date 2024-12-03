@@ -1027,6 +1027,7 @@
                 total += Math.Abs(right[i] - left[i]);
             }
 
+            Console.WriteLine("- Day 1");
             Console.WriteLine($"Total distance: {total}");
 
 

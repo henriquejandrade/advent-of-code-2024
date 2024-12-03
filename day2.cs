@@ -1019,7 +1019,7 @@ namespace advent_of_code_2024
 
             foreach (bool check in checks) Console.WriteLine(check);
 
-            Console.WriteLine();
+            Console.WriteLine("- Day 2");
             Console.WriteLine("Part 1:");
             Console.WriteLine($"Report count: {checks.Count()}");
             Console.WriteLine($"Total safe: {checks.Count(check => check)}");

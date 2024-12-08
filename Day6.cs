@@ -1,6 +1,4 @@
-﻿
-using static System.Net.Mime.MediaTypeNames;
-using System;
+﻿using System;
 
 namespace advent_of_code_2024
 {
@@ -9,27 +7,48 @@ namespace advent_of_code_2024
         public int X { get; set; }
         public int Y { get; set; }
 
-        public List<int> Orientations { get; set; }
-
-        public Position()
-        {
-            Orientations = new List<int>();
-        }
+        public Position() { }
 
         public Position(int x, int y)
         {
             X = x;
             Y = y;
-            Orientations = new List<int>();
         }
 
-        public override bool Equals(object? obj) => X == ((Position)obj).X && Y == ((Position)obj).Y;
+        public override bool Equals(object? obj) => (X == ((Position)obj).X) && (Y == ((Position)obj).Y);
 
         public override int GetHashCode() => HashCode.Combine(X, Y);
     }
 
     internal class Day6
     {
+        public static Tuple<bool, List<Position>> Play(char[][] map, Position position, int orientation)
+        {
+            List<Tuple<Position, int>> visited = new() { new(position, orientation) };
+            Position guard = position;
+
+            bool loop = false;
+            while (true)
+            {
+                Position next = Next(guard, orientation);
+
+                if (!IsWithinBounds(map, next)) break;
+
+                if (map[next.Y][next.X] == '#') orientation = orientation >= 3 ? 0 : orientation + 1;
+                else guard = next;
+
+                if (visited.Any(visit => visit.Item1.X == guard.X && visit.Item1.Y == guard.Y && visit.Item2 == orientation))
+                {
+                    loop = true;
+                    break;
+                }
+
+                visited.Add(new(guard, orientation));
+            }
+
+            return new(loop, visited.Select(visit => visit.Item1).ToList());
+        }
+
         public static void Run()
         {
             char[][] map = Input
@@ -50,53 +69,56 @@ namespace advent_of_code_2024
                 }
             }
 
-            // Movement
-            Position guard = initialPosition;
-            Position next = new Position();
-            int orientation = 0;
-            List<Position> loops = new List<Position>();
-            List<Position> visited = new List<Position>() { guard };
-            while (IsWithinBounds(map, guard))
-            {
-                next = Next(guard, orientation);
-
-                if (!IsWithinBounds(map, next)) break;
-                if (map[next.Y][next.X] == '#') orientation++;
-                else
-                {
-                    guard = next;
-
-                    // Searches for loops in current position
-                    if (FindsNextOrientation(map, visited, guard, orientation + 1))
-                    {
-                        loops.Add(guard);
-                        //loops++;
-                    }
-
-                    // Updates list of orientations for that position
-                    Position visit = visited.SingleOrDefault(p => p.X == guard.X && p.Y == guard.Y);
-                    if (visit == null)
-                    {
-                        guard.Orientations.Add(orientation);
-                        visited.Add(guard);
-                    }
-                    else
-                    {
-                        visit.Orientations.Add(orientation);
-                    }
-                }
-
-                if (orientation >= 4) orientation = 0;
-            }
+            /*
+             * Part 1
+             */
+            Tuple<bool, List<Position>> simulation1 = Play(map, initialPosition, 0);
 
             Console.WriteLine("- Day 6:");
             Console.WriteLine("Part 1:");
-            Console.WriteLine($"Unique visited positions: {visited.Distinct().Count()}");
+            Console.WriteLine($"Unique visited positions: {simulation1.Item2.Distinct().Count()}");
+
+            /*
+             * Part 2
+             */
+            List<Position> visited = simulation1.Item2.Distinct().ToList();
+            int loops = 0;
+            foreach (Position visit in visited.Skip(1)) // avoid initial position
+            {
+                char[][] simMap = map.Select(c => c.ToArray()).ToArray();
+                simMap[visit.Y][visit.X] = '#';
+                Tuple<bool, List<Position>> simResult = Play(simMap, initialPosition, 0);
+                if (simResult.Item1) loops++;
+            }
+
             Console.WriteLine("Part 2:");
-            Console.WriteLine($"Possible loops count: {loops.Distinct().Count()}");
+            Console.WriteLine($"Possible loops count: {loops}");
+            Console.WriteLine();
+
+            //for (int j = 0; j < map.Length; j++)
+            //{
+            //    for (int i = 0; i < map[0].Length; i++)
+            //    {
+            //        char draw = map[j][i];
+            //        if (visited.Contains(new Position(i, j)))
+            //            switch (visited.First(p => p.X == i && p.Y == j).Orientations.Last())
+            //            {
+            //                case 0: draw = '^'; break;
+            //                case 1: draw = '>'; break;
+            //                case 2: draw = 'v'; break;
+            //                case 3: draw = '<'; break;
+            //            }
+
+            //        if (loops.Contains(new Position(i, j)))
+            //            draw = 'O';
+
+            //        Console.Write(draw);
+            //    }
+            //    Console.WriteLine();
+            //}
         }
 
-        private static bool IsWithinBounds(char[][] map, Position position) => position.X >= 0 && position.X < map.Length && position.Y >= 0 && position.Y < map[0].Length;
+        public static bool IsWithinBounds(char[][] map, Position position) => position.X >= 0 && position.X < map.Length && position.Y >= 0 && position.Y < map[0].Length;
 
         private static Position Next(Position position, int orientation)
         {
@@ -109,20 +131,38 @@ namespace advent_of_code_2024
             }
         }
 
-        private static bool FindsNextOrientation(char[][] map, List<Position> visited, Position position, int orientation)
+        private static bool CheckLoop(char[][] map, List<Tuple<Position, int>> visited, Position position, int orientation)
         {
+            Position guardSim = position;
+            List<Tuple<Position, int>> localVisited = new() { new(guardSim, orientation) };
             if (orientation >= 4) orientation = 0;
-            Position next = Next(position, orientation);
-            while (IsWithinBounds(map, next) && map[next.Y][next.X] != '#')
+            guardSim = Next(guardSim, orientation);
+            Position nextSim;
+            while (IsWithinBounds(map, guardSim))
             {
-                //if (!visited.Contains(next)) continue;
-                if (visited.Contains(next) && visited.Single(visit => visit.Equals(next)).Orientations.Contains(orientation))
+                nextSim = Next(guardSim, orientation);
+
+                //bool isWall = false;
+                if (!IsWithinBounds(map, nextSim)) break;
+                if (map[nextSim.Y][nextSim.X] == '#')
                 {
-                    return true;
+                    //isWall = true;
+                    orientation++;
+                }
+                else
+                {
+                    guardSim = nextSim;
+
+                    if (visited.Any(i => i.Item1.X == guardSim.X && i.Item1.Y == guardSim.Y && i.Item2 == orientation) ||
+                        localVisited.Any(i => i.Item1.X == guardSim.X && i.Item1.Y == guardSim.Y && i.Item2 == orientation))
+                    {
+                        return true;
+                    }
                 }
 
+                localVisited.Add(new(guardSim, orientation));
 
-                next = Next(next, orientation);
+                if (orientation >= 4) orientation = 0;
             }
 
             return false;

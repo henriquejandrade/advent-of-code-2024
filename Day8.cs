@@ -1,0 +1,153 @@
+﻿namespace advent_of_code_2024
+{
+    public static class Day8
+    {
+        public static void Run()
+        {
+            char[][] map = Input.Split('\n').Select(line => line.Replace("\r", "").ToCharArray()).ToArray();
+            char[] antennas = Input.ToCharArray().Distinct().Where(c => c != '.' && c != '\n').ToArray();
+
+            Dictionary<Position, bool> results = new Dictionary<Position, bool>();
+            Dictionary<Position, bool> irradiatedResults = new Dictionary<Position, bool>();
+            foreach (char antenna in antennas)
+            {
+                List<Position> antennaPositions = new List<Position>();
+                for (int y = 0; y < map.Length; y++)
+                {
+                    for (int x = 0; x < map[0].Length; x++)
+                    {
+                        if (map[y][x] == antenna)
+                        {
+                            antennaPositions.Add(new(x, y));
+                        }
+                    }
+                }
+
+                if (antennaPositions.Count > 1)
+                {
+                    for (int i = 0; i < antennaPositions.Count - 1; i++)
+                    {
+                        for (int j = i + 1; j < antennaPositions.Count; j++)
+                        {
+                            Position distance = new Position(
+                                antennaPositions[j].X - antennaPositions[i].X,
+                                antennaPositions[j].Y - antennaPositions[i].Y);
+
+                            /*
+                             * Part 1
+                             */
+                            Position antinodeA = new(antennaPositions[i].X - distance.X, antennaPositions[i].Y - distance.Y);
+                            Position antinodeB = new(antennaPositions[j].X + distance.X, antennaPositions[j].Y + distance.Y);
+
+                            if (Day6.IsWithinBounds(map, antinodeA)) results.TryAdd(antinodeA, true);
+                            if (Day6.IsWithinBounds(map, antinodeB)) results.TryAdd(antinodeB, true);
+
+                            /*
+                             * Part 2
+                             */
+                            Position spreadA = antinodeA;
+                            while (Day6.IsWithinBounds(map, spreadA))
+                            {
+                                irradiatedResults.TryAdd(spreadA, true);
+                                spreadA = new(spreadA.X - distance.X, spreadA.Y - distance.Y);
+                            }
+
+                            Position spreadB = antinodeB;
+                            while (Day6.IsWithinBounds(map, spreadB))
+                            {
+                                irradiatedResults.TryAdd(spreadB, true);
+                                spreadB = new(spreadB.X + distance.X, spreadB.Y + distance.Y);
+                            }
+
+                            irradiatedResults.TryAdd(antennaPositions[j], true);
+                        }
+
+                        irradiatedResults.TryAdd(antennaPositions[i], true);
+                    }
+                }
+            }
+
+            for (int y = 0; y < map.Length; y++)
+            {
+                for (int x = 0; x < map[0].Length; x++)
+                {
+                    if (irradiatedResults.ContainsKey(new Position(x, y)))
+                        Console.Write('#');
+                    else
+                        Console.Write(map[y][x]);
+                }
+                Console.WriteLine();
+            }
+
+            Console.WriteLine("- Day 8:");
+            Console.WriteLine($"Part 1: {results.Count}");
+            Console.WriteLine($"Part 2: {irradiatedResults.Count}");
+        }
+
+        private static string InputDummy =
+            @"............
+........0...
+.....0......
+.......0....
+....0.......
+......A.....
+............
+............
+........A...
+.........A..
+............
+............";
+
+        private static string Input =
+            @"...O.....0...............................p..k.....
+O.........o....w..T.........................p.....
+..................w..........oM...................
+.............................................Y....
+o.............T...........................z.....pk
+.....................................z..Y....t.F..
+...........T..........................F.......Y...
+...................A............z...k..M..........
+....O.........j....w.....................M........
+..........w....T..................M..k............
+.............5.............................F.....t
+......................A.............F....E........
+.....................S.........A..................
+.P................................................
+........................A...E.............x...t...
+............j.........................t.........x.
+.......................j.........................x
+....................................E........c....
+.............P.......E............................
+...............j..5...............q...............
+..............P..............................Qc...
+..........C..........s................c........x..
+.............C...r................................
+.....C......V..........q...................Q......
+...........yX.........q...................Q.......
+.....X....................e.............m.........
+.2.................e..7....m.......c..............
+......i..........e...K..............f....U...WQ...
+...X....................e....................V...Y
+...............5..X.....0.........................
+..C..i......5..3...sK......J.........f..B.........
+2............3.............0I...a.........BNb.....
+.........................K............m...........
+.r........3...............s....7...m.v...f.......b
+........3........7.....Iy..........q...b.N........
+.....R.1.......................n.....a.B.......VN.
+......R.........9...................a...W.........
+..........7.6................S....................
+..............r.......s...0........nb....W..f..B..
+...2...........I......K...........................
+..............................u...n............U..
+............r......y.............O............W...
+.......R..........v..u................N...V.......
+..........R.8..4.9..y........u....................
+...8...............v................J.............
+.....8..............4.........Z.........n.....J.U.
+...........4i....................Z..S.............
+..............9...........1.u.S................J..
+8...6....9..4......a........Z.1...................
+....................v..i.............Z............";
+    }
+}
